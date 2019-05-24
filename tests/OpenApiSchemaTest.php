@@ -325,8 +325,7 @@ class OpenApiSchemaTest extends TestCase
                         ],
                     ],
                 ],
-            ]
-            ,
+            ],
             $this->openapiObject->getPathDefinition('/v2/pet/10/uploadImage', 'post')
         );
     }
@@ -407,6 +406,73 @@ class OpenApiSchemaTest extends TestCase
     public function testGetDefinitionFailed()
     {
         $this->openapiObject->getDefintion('Order');
+    }
+
+
+    public function testGetDefinitionAllOf()
+    {
+        $dog = $this->openapiObject->getDefintion('#/components/schemas/Dog');
+        $assert = [
+            'properties' => [
+                'created_at' => [
+                    'type' => 'string',
+                ],
+                'updated_at' => [
+                    'type' => 'string',
+                ],
+                'id' => [
+                    'type' => 'integer',
+                    'format' => 'int64',
+                ],
+                'category' => [
+                    '$ref' => '#/components/schemas/Category',
+                ],
+                'name' => [
+                    'type' => 'string',
+                    'example' => 'doggie',
+                ],
+                'photoUrls' => [
+                    'type' => 'array',
+                    'xml' => [
+                        'name' => 'photoUrl',
+                        'wrapped' => true,
+                    ],
+                    'items' => [
+                        'type' => 'string',
+                    ],
+                ],
+                'tags' => [
+                    'type' => 'array',
+                    'xml' => [
+                        'name' => 'tag',
+                        'wrapped' => true,
+                    ],
+                    'items' => [
+                        '$ref' => '#/components/schemas/Tag',
+                    ],
+                ],
+                'status' => [
+                    'type' => 'string',
+                    'description' => 'pet status in the store',
+                    'enum' => [
+                        'available',
+                        'pending',
+                        'sold',
+                    ],
+                ],
+                'breed' => [
+                    'type' => 'string',
+                    'enum' => [
+                        'Dingo',
+                        'Husky',
+                        'Retriever',
+                        'Shepherd',
+                    ],
+                ],
+            ],
+        ];
+
+        $this->assertEquals($assert, $dog);
     }
 
     /**

@@ -155,7 +155,14 @@ class SwaggerSchema
                 throw new DefinitionNotFoundException("Component'$name' not found");
             }
 
-            return $this->jsonFile[$nameParts[1]][$nameParts[2]][$nameParts[3]];
+            $def = $this->jsonFile[$nameParts[1]][$nameParts[2]][$nameParts[3]];
+            if (isset($def["allOf"])) {
+                $props = $this->resolveAllOfProps($def["allOf"]);
+                unset($def["allOf"]);
+                $def["properties"] = $props;
+            }
+
+            return $def;
         }
 
         if (count($nameParts) < 3 || $nameParts[0] !== '#') {
@@ -167,6 +174,22 @@ class SwaggerSchema
         }
 
         return $this->jsonFile[$nameParts[1]][$nameParts[2]];
+    }
+
+    private function resolveAllOfProps($all)
+    {
+        $props = [];
+        foreach ($all as $one) {
+            if (isset($one['$ref'])) {
+                $d = $this->getDefintion($one['$ref']);
+                $props += $d["properties"];
+                continue;
+            }
+
+            $props += $one["properties"];
+        }
+
+        return $props;
     }
 
     /**

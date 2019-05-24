@@ -996,51 +996,81 @@
           "name",
           "photoUrls"
         ],
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Timestamps"
           },
-          "category": {
-            "$ref": "#/components/schemas/Category"
-          },
-          "name": {
-            "type": "string",
-            "example": "doggie"
-          },
-          "photoUrls": {
-            "type": "array",
-            "xml": {
-              "name": "photoUrl",
-              "wrapped": true
-            },
-            "items": {
-              "type": "string"
+          {
+            "properties": {
+              "id": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "category": {
+                "$ref": "#/components/schemas/Category"
+              },
+              "name": {
+                "type": "string",
+                "example": "doggie"
+              },
+              "photoUrls": {
+                "type": "array",
+                "xml": {
+                  "name": "photoUrl",
+                  "wrapped": true
+                },
+                "items": {
+                  "type": "string"
+                }
+              },
+              "tags": {
+                "type": "array",
+                "xml": {
+                  "name": "tag",
+                  "wrapped": true
+                },
+                "items": {
+                  "$ref": "#/components/schemas/Tag"
+                }
+              },
+              "status": {
+                "type": "string",
+                "description": "pet status in the store",
+                "enum": [
+                  "available",
+                  "pending",
+                  "sold"
+                ]
+              }
             }
-          },
-          "tags": {
-            "type": "array",
-            "xml": {
-              "name": "tag",
-              "wrapped": true
-            },
-            "items": {
-              "$ref": "#/components/schemas/Tag"
-            }
-          },
-          "status": {
-            "type": "string",
-            "description": "pet status in the store",
-            "enum": [
-              "available",
-              "pending",
-              "sold"
-            ]
           }
-        },
+        ],
         "xml": {
           "name": "Pet"
         }
+      },
+      "Dog": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Pet"
+          },
+          {
+            "$ref": "#/components/schemas/Timestamps"
+          },
+          {
+            "properties": {
+              "breed": {
+                "type": "string",
+                "enum": [
+                  "Dingo",
+                  "Husky",
+                  "Retriever",
+                  "Shepherd"
+                ]
+              }
+            }
+          }
+        ]
       },
       "ApiResponse": {
         "type": "object",
@@ -1053,6 +1083,17 @@
             "type": "string"
           },
           "message": {
+            "type": "string"
+          }
+        }
+      },
+      "Timestamps": {
+        "type": "object",
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "updated_at": {
             "type": "string"
           }
         }
