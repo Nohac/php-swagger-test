@@ -12,21 +12,23 @@ use ByJG\Swagger\Exception\HttpMethodNotFoundException;
 use ByJG\Swagger\Exception\InvalidDefinitionException;
 use ByJG\Swagger\Exception\NotMatchedException;
 use ByJG\Swagger\Exception\PathNotFoundException;
+use ByJG\Swagger\Exception\SchemaParseException;
 
 class SwaggerSchema
 {
-    protected $jsonFile;
+    protected $schema;
     protected $allowNullValues;
     protected $specificationVersion;
 
     const SWAGGER_PATHS="paths";
     const SWAGGER_PARAMETERS="parameters";
 
-    public function __construct($jsonFile, $allowNullValues = false)
+    public function __construct($schema, $allowNullValues = false)
     {
-        $this->jsonFile = json_decode($jsonFile, true);
+        $this->schema = json_decode($schema, true)??yaml_parse($schema)??null;
+
         $this->allowNullValues = (bool) $allowNullValues;
-        $this->specificationVersion = isset($this->jsonFile['swagger']) ? '2' : '3';
+        $this->specificationVersion = isset($this->schema['swagger']) ? '2' : '3';
     }
 
     /**
@@ -40,27 +42,27 @@ class SwaggerSchema
 
     public function getServerUrl()
     {
-        return isset($this->jsonFile['servers']) ? $this->jsonFile['servers'][0]['url'] : '';
+        return isset($this->schema['servers']) ? $this->schema['servers'][0]['url'] : '';
     }
 
     public function getHttpSchema()
     {
-        return isset($this->jsonFile['schemes']) ? $this->jsonFile['schemes'][0] : '';
+        return isset($this->schema['schemes']) ? $this->schema['schemes'][0] : '';
     }
 
     public function getHost()
     {
-        return isset($this->jsonFile['host']) ? $this->jsonFile['host'] : '';
+        return isset($this->schema['host']) ? $this->schema['host'] : '';
     }
 
     public function getBasePath()
     {
         if ($this->getSpecificationVersion() === '3') {
-            $basePath =isset($this->jsonFile['servers']) ? explode('/', $this->jsonFile['servers'][0]['url']) : '';
+            $basePath =isset($this->schema['servers']) ? explode('/', $this->schema['servers'][0]['url']) : '';
             return is_array($basePath) ? '/' . end($basePath) : $basePath;
         }
 
-        return isset($this->jsonFile['basePath']) ? $this->jsonFile['basePath'] : '';
+        return isset($this->schema['basePath']) ? $this->schema['basePath'] : '';
     }
 
     /**
@@ -78,15 +80,15 @@ class SwaggerSchema
         $path = preg_replace('~^' . $this->getBasePath() . '~', '', $path);
 
         // Try direct match
-        if (isset($this->jsonFile[self::SWAGGER_PATHS][$path])) {
-            if (isset($this->jsonFile[self::SWAGGER_PATHS][$path][$method])) {
-                return $this->jsonFile[self::SWAGGER_PATHS][$path][$method];
+        if (isset($this->schema[self::SWAGGER_PATHS][$path])) {
+            if (isset($this->schema[self::SWAGGER_PATHS][$path][$method])) {
+                return $this->schema[self::SWAGGER_PATHS][$path][$method];
             }
             throw new HttpMethodNotFoundException("The http method '$method' not found in '$path'");
         }
 
         // Try inline parameter
-        foreach (array_keys($this->jsonFile[self::SWAGGER_PATHS]) as $pathItem) {
+        foreach (array_keys($this->schema[self::SWAGGER_PATHS]) as $pathItem) {
             if (strpos($pathItem, '{') === false) {
                 continue;
             }
@@ -95,7 +97,7 @@ class SwaggerSchema
 
             $matches = [];
             if (preg_match($pathItemPattern, $path, $matches)) {
-                $pathDef = $this->jsonFile[self::SWAGGER_PATHS][$pathItem];
+                $pathDef = $this->schema[self::SWAGGER_PATHS][$pathItem];
                 if (!isset($pathDef[$method])) {
                     throw new HttpMethodNotFoundException("The http method '$method' not found in '$path'");
                 }
@@ -151,11 +153,11 @@ class SwaggerSchema
                 throw new InvalidDefinitionException('Invalid Component');
             }
 
-            if (!isset($this->jsonFile[$nameParts[1]][$nameParts[2]][$nameParts[3]])) {
+            if (!isset($this->schema[$nameParts[1]][$nameParts[2]][$nameParts[3]])) {
                 throw new DefinitionNotFoundException("Component'$name' not found");
             }
 
-            $def = $this->jsonFile[$nameParts[1]][$nameParts[2]][$nameParts[3]];
+            $def = $this->schema[$nameParts[1]][$nameParts[2]][$nameParts[3]];
             if (isset($def["allOf"])) {
                 $props = $this->resolveAllOfProps($def["allOf"]);
                 unset($def["allOf"]);
@@ -169,11 +171,11 @@ class SwaggerSchema
             throw new InvalidDefinitionException('Invalid Definition');
         }
 
-        if (!isset($this->jsonFile[$nameParts[1]][$nameParts[2]])) {
+        if (!isset($this->schema[$nameParts[1]][$nameParts[2]])) {
             throw new DefinitionNotFoundException("Definition '$name' not found");
         }
 
-        return $this->jsonFile[$nameParts[1]][$nameParts[2]];
+        return $this->schema[$nameParts[1]][$nameParts[2]];
     }
 
     private function resolveAllOfProps($all)
@@ -204,7 +206,7 @@ class SwaggerSchema
     {
         $structure = $this->getPathDefinition($path, $method);
 
-        if($this->getSpecificationVersion() === '3') {
+        if ($this->getSpecificationVersion() === '3') {
             if (!isset($structure['requestBody'])) {
                 return new SwaggerRequestBody($this, "$method $path", []);
             }
