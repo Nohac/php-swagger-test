@@ -557,4 +557,49 @@ class OpenApiSchemaTest extends TestCase
         $schema = new SwaggerSchema('{}', $allowNullValues);
         $this->assertTrue($schema->isAllowNullValues());
     }
+
+    public function testParseYamlSchema()
+    {
+        $schema = new SwaggerSchema(file_get_contents(__DIR__ . '/example/openapi.yaml'));
+        $expected = [
+            "type"       => "object",
+            "properties" => [
+                "id"       => [
+                    "type"   => "integer",
+                    "format" => "int64",
+                ],
+                "petId"    => [
+                    "type"   => "integer",
+                    "format" => "int64",
+                ],
+                "quantity" => [
+                    "type"   => "integer",
+                    "format" => "int32",
+                ],
+                "shipDate" => [
+                    "type"   => "string",
+                    "format" => "date-time",
+                ],
+                "status"   => [
+                    "type"        => "string",
+                    "description" => "Order Status",
+                    "enum"        => [
+                        "placed",
+                        "approved",
+                        "delivered",
+                    ],
+                ],
+                "complete" => [
+                    "type"    => "boolean",
+                    "default" => false,
+                ],
+            ],
+            "xml"        => [
+                "name" => "Order",
+            ],
+        ];
+
+        $order = $schema->getDefintion('#/components/schemas/Order');
+        $this->assertEquals($expected, $order);
+    }
 }
