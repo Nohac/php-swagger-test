@@ -261,12 +261,29 @@ abstract class SwaggerBody
      */
     protected function matchSchema($name, $schema, $body)
     {
+        // Resolve allOf
+        if (isset($schema['allOf'])) {
+            $resolve = [];
+            foreach ($schema['allOf'] as $entry) {
+                if (isset($entry['$ref'])) {
+                    $resolve = array_merge_recursive(
+                        $resolve,
+                        $this->swaggerSchema->getDefintion($entry['$ref'])
+                    );
+                    continue;
+                }
+                $resolve = array_merge_recursive($resolve, $entry);
+            }
+
+            $schema = $resolve;
+        }
+
         // Match Single Types
         if ($this->matchTypes($name, $schema, $body)) {
             return true;
         }
 
-        if(!isset($schema['$ref']) && isset($schema['content'])) {
+        if (!isset($schema['$ref']) && isset($schema['content'])) {
             $schema['$ref'] = $schema['content'][key($schema['content'])]['schema']['$ref'];
         }
 
