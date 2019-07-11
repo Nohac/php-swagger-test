@@ -102,7 +102,7 @@ class SwaggerSchema
                     throw new HttpMethodNotFoundException("The http method '$method' not found in '$path'");
                 }
 
-                $this->validateArguments('path', $pathDef[$method][self::SWAGGER_PARAMETERS], $matches);
+                $this->validateArguments('path', $pathDef[$method][self::SWAGGER_PARAMETERS]??[], $matches);
 
                 return $pathDef[$method];
             }
