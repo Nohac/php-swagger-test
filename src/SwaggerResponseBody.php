@@ -18,13 +18,25 @@ class SwaggerResponseBody extends SwaggerBody
     public function match($body)
     {
         if ($this->swaggerSchema->getSpecificationVersion() === '3') {
-            if (!isset($this->structure['content'])) {
+            $content = $this->structure['content']??null;
+
+            if (!$content) {
                 if (!empty($body)) {
                     throw new NotMatchedException("Expected empty body for " . $this->name);
                 }
                 return true;
             }
-            return $this->matchSchema($this->name, $this->structure['content'][key($this->structure['content'])]['schema'], $body);
+
+            // content == {}, aka. empty array, means anything in body is allowed
+            if (sizeof($content) == 0) {
+                return true;
+            }
+
+            return $this->matchSchema(
+                $this->name,
+                $this->structure['content'][key($this->structure['content'])]['schema'],
+                $body
+             );
         }
 
         if (!isset($this->structure['schema'])) {
