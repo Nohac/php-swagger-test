@@ -20,15 +20,15 @@ class SwaggerResponseBody extends SwaggerBody
         if ($this->swaggerSchema->getSpecificationVersion() === '3') {
             $content = $this->structure['content']??null;
 
+            // content == {}, aka. empty array, means anything in body is allowed
+            if ($content !== null && sizeof($content) == 0) {
+                return true;
+            }
+
             if (!$content) {
                 if (!empty($body)) {
                     throw new NotMatchedException("Expected empty body for " . $this->name);
                 }
-                return true;
-            }
-
-            // content == {}, aka. empty array, means anything in body is allowed
-            if (sizeof($content) == 0) {
                 return true;
             }
 
