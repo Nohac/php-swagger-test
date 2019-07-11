@@ -146,28 +146,23 @@ abstract class SwaggerBody
         $type = $schema['type'];
 
         $validators = [
-            function () use ($name, $body, $type)
-            {
+            function () use ($name, $body, $type) {
                 return $this->matchNull($name, $body, $type);
             },
 
-            function () use ($name, $schema, $body, $type)
-            {
+            function () use ($name, $schema, $body, $type) {
                 return $this->matchString($name, $schema, $body, $type);
             },
 
-            function () use ($name, $body, $type)
-            {
+            function () use ($name, $body, $type) {
                 return $this->matchNumber($name, $body, $type);
             },
 
-            function () use ($name, $body, $type)
-            {
+            function () use ($name, $body, $type) {
                 return $this->matchBool($name, $body, $type);
             },
 
-            function () use ($name, $schema, $body, $type)
-            {
+            function () use ($name, $schema, $body, $type) {
                 return $this->matchArray($name, $schema, $body, $type);
             }
         ];
